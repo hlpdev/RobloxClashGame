@@ -9,6 +9,7 @@ static pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t pool_cond = PTHREAD_COND_INITIALIZER;
 
 bool pg_pool_init(const char *conn_str) {
+  log_info("initializing postgres connection pool...");
   for (int i = 0; i < PG_POOL_SIZE; i++) {
     pool.connections[i] = PQconnectdb(conn_str);
     if (PQstatus(pool.connections[i]) != CONNECTION_OK) {
@@ -58,6 +59,7 @@ void pg_release(PGconn* conn) {
 }
 
 void pg_pool_shutdown(void) {
+  log_info("shutting down postgres connection pool...");
   for (int i = 0; i < PG_POOL_SIZE; i++) {
     PQfinish(pool.connections[i]);
   }

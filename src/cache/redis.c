@@ -18,6 +18,7 @@ static pthread_mutex_t pool_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t pool_cond = PTHREAD_COND_INITIALIZER;
 
 bool redis_pool_init(const char* conn_str) {
+  log_info("initializing redis connection pool...");
   char host[256];
   int port = 6379;
 
@@ -83,6 +84,7 @@ void redis_release(redisContext* ctx) {
 }
 
 void redis_pool_shutdown(void) {
+  log_info("shutting down redis connection pool...");
   for (int i = 0; i < REDIS_POOL_SIZE; i++) {
     redisFree(pool.connections[i]);
   }

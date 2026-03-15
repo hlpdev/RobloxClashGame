@@ -88,8 +88,9 @@ int main(void) {
   // Shutdown and cleanup postgresql connection pool
   pg_pool_shutdown();
 
+  log_info("server shutdown successful");
+
   // Shutdown logging
-  log_info("server shutting down...");
   log_shutdown();
 
   return 0;

@@ -88,6 +88,7 @@ static bool apply_migration(PGconn* conn, const char* filename) {
 }
 
 bool migrations_run(void) {
+  log_info("running database migrations...");
   PGconn* conn = pg_acquire();
 
   if (!ensure_migrations_table(conn)) {

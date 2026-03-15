@@ -36,6 +36,7 @@ static bool open_log_for_time(struct tm* time) {
 }
 
 bool log_init(LogLevel level, const char* filepath) {
+  setbuf(stdout, NULL);
   current_level = level;
   strncpy(filepath_fmt, filepath, sizeof(filepath_fmt) - 1);
 
