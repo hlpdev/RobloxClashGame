@@ -6,6 +6,7 @@
 #include <pthread.h>
 
 #include "repository/server_repository.h"
+#include "repository/online_player_repository.h"
 #include "cache/redis.h"
 #include "log/log.h"
 
@@ -58,8 +59,8 @@ static void on_server_expired(const char* server_id) {
   }
 
   redis_release(redis);
-
-  // TODO Set each player offline as well!
+  
+  online_player_repository_remove_by_server(server_id);
 }
 
 static void* expiry_listener_thread(void* arg) {
@@ -164,6 +165,8 @@ bool server_repository_register(const Server* server) {
 }
 
 bool server_repository_unregister(const char* server_id) {
+  online_player_repository_remove_by_server(server_id);
+
   redisContext* redis = redis_acquire();
 
   char key[256];
