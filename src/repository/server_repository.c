@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <poll.h>
 #include <errno.h>
 
 #include "repository/server_repository.h"
@@ -18,11 +19,11 @@ static pthread_t expiry_thread;
 static volatile bool expiry_running = false;
 
 static void server_key(const char* server_id, char* out, size_t out_len) {
-  snprintf(out, out_len, "%s:%s", SERVER_KEY_PREFIX, server_id);
+  snprintf(out, out_len, "%s%s", SERVER_KEY_PREFIX, server_id);
 }
 
 static void server_players_key(const char* server_id, char* out, size_t out_len) {
-  snprintf(out, out_len, "%s:%s:players", SERVER_KEY_PREFIX, server_id);
+  snprintf(out, out_len, "%s%s:players", SERVER_KEY_PREFIX, server_id);
 }
 
 static bool parse_server_key(const char* expired_key, char* server_id_out, size_t out_len) {
@@ -69,9 +70,6 @@ static void* expiry_listener_thread(void* arg) {
 
   redisContext* redis = redis_acquire();
 
-  struct timeval timeout = { .tv_sec = 1, .tv_usec = 0 };
-  redisSetTimeout(redis, timeout);
-
   redisReply* reply = redisCommand(redis, "SUBSCRIBE __keyevent@0__:expired");
   if (!reply || reply->type == REDIS_REPLY_ERROR) {
     log_error("expiry_listener: SUBSCRIBE failed: %s",
@@ -87,13 +85,23 @@ static void* expiry_listener_thread(void* arg) {
   log_info("expiry listener subscribed");
 
   while (expiry_running) {
-    reply = NULL;
+    struct pollfd pfd = { .fd = redis->fd, .events = POLLIN };
+    int ready = poll(&pfd, 1, 1000);
 
+    if (ready < 0) {
+      if (errno == EINTR) continue;
+      log_error("expiry_listener: poll failed: %s", strerror(errno));
+      break;
+    }
+
+    if (ready == 0) {
+      continue; // 1s timeout, no data - loop to check expiry_running
+    }
+
+    reply = NULL;
     if (redisGetReply(redis, (void**)&reply) != REDIS_OK) {
-      if (redis->err == REDIS_ERR_IO && (errno == EAGAIN || errno == EWOULDBLOCK)) {
-        continue; // timeout terminated the reply
-      }
       log_error("expiry_listener: redisGetReply failed");
+      if (reply) freeReplyObject(reply);
       break;
     }
 
@@ -225,7 +233,7 @@ bool server_repository_heartbeat(const char* server_id) {
   redis_release(redis);
 
   if (!alive) {
-    log_error("server_repository_heartbeat: server expired before heartbeat: %s");
+    log_error("server_repository_heartbeat: server expired before heartbeat: %s", server_id);
   }
 
   return alive;
@@ -299,5 +307,3 @@ bool server_repository_exists(const char* server_id) {
 void server_repository_free(Server* server) {
   free(server);
 }
-
-

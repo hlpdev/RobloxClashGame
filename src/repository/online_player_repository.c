@@ -68,7 +68,7 @@ bool online_player_repository_add(const OnlinePlayer* player) {
   char sp_key[256];
   server_players_key(player->server_id, sp_key, sizeof(sp_key));
 
-  reply = redisCommand(redis, "SAAD %s %s", sp_key, player_id_str);
+  reply = redisCommand(redis, "SADD %s %s", sp_key, player_id_str);
   if (!reply || reply->type == REDIS_REPLY_ERROR) {
     log_error("online_player_repository_add: SADD failed: %s",
         reply ? reply->str : "null reply");
@@ -193,11 +193,12 @@ bool online_player_repository_remove_by_server(const char* server_id) {
     }
   }
 
+  size_t cleaned = members->elements;
   freeReplyObject(members);
   redis_release(redis);
 
   log_info("cleaned up %zu player sessions for expired server %s",
-      members->elements, server_id);
+      cleaned, server_id);
   return ok;
 }
 
