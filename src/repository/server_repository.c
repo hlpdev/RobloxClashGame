@@ -89,7 +89,7 @@ static void* expiry_listener_thread(void* arg) {
     int ready = poll(&pfd, 1, 1000);
 
     if (ready < 0) {
-      if (errno == EINTR) continue;
+      if (errno == EINTR) { continue; }
       log_error("expiry_listener: poll failed: %s", strerror(errno));
       break;
     }
@@ -101,7 +101,7 @@ static void* expiry_listener_thread(void* arg) {
     reply = NULL;
     if (redisGetReply(redis, (void**)&reply) != REDIS_OK) {
       log_error("expiry_listener: redisGetReply failed");
-      if (reply) freeReplyObject(reply);
+      if (reply) { freeReplyObject(reply); }
       break;
     }
 

@@ -75,7 +75,7 @@ static void* worker_loop(void* arg) {
   while (running) {
     int n = epoll_wait(worker->epoll_fd, events, MAX_EVENTS, 100);
     if (n < 0) {
-      if (errno == EINTR) continue;
+      if (errno == EINTR) { continue; }
       break;
     }
 

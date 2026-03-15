@@ -109,10 +109,10 @@ bool migrations_run(void) {
   struct dirent* entry;
   while ((entry = readdir(dir)) != NULL) {
     size_t len = strlen(entry->d_name);
-    if (len < 4 || strcmp(entry->d_name + len - 4, ".sql") != 0) continue;
+    if (len < 4 || strcmp(entry->d_name + len - 4, ".sql") != 0) { continue; }
 
     files[count++] = strdup(entry->d_name);
-    if (count >= MAX_MIGRATIONS) break;
+    if (count >= MAX_MIGRATIONS) { break; }
   }
 
   closedir(dir);

@@ -126,8 +126,8 @@ void router_dispatch(int fd, const char* raw, int raw_len) {
   }
 
   for (int i = 0; i < route_count; i++) {
-    if (strcmp(routes[i].method, method) != 0) continue;
-    if (strcmp(routes[i].path, path) != 0) continue;
+    if (strcmp(routes[i].method, method) != 0) { continue; }
+    if (strcmp(routes[i].path, path) != 0) { continue; }
 
     if (routes[i].realm != req.realm) {
       log_info("rejected request: realm mismatch on %s %s", method, path);

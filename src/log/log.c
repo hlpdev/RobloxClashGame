@@ -11,8 +11,8 @@ static char filepath_fmt[256];
 static int current_hour = -1;
 
 LogLevel log_level_from_string(const char* str) {
-  if (strcmp(str, "debug") == 0) return LOG_DEBUG;
-  if (strcmp(str, "error") == 0) return LOG_ERROR;
+  if (strcmp(str, "debug") == 0) { return LOG_DEBUG; }
+  if (strcmp(str, "error") == 0) { return LOG_ERROR; }
   return LOG_INFO;
 }
 
