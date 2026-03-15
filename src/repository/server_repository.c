@@ -4,6 +4,7 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <errno.h>
 
 #include "repository/server_repository.h"
 #include "repository/online_player_repository.h"
@@ -68,6 +69,9 @@ static void* expiry_listener_thread(void* arg) {
 
   redisContext* redis = redis_acquire();
 
+  struct timeval timeout = { .tv_sec = 1, .tv_usec = 0 };
+  redisSetTimeout(redis, timeout);
+
   redisReply* reply = redisCommand(redis, "SUBSCRIBE __keyevent@0__:expired");
   if (!reply || reply->type == REDIS_REPLY_ERROR) {
     log_error("expiry_listener: SUBSCRIBE failed: %s",
@@ -86,6 +90,9 @@ static void* expiry_listener_thread(void* arg) {
     reply = NULL;
 
     if (redisGetReply(redis, (void**)&reply) != REDIS_OK) {
+      if (redis->err == REDIS_ERR_IO && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        continue; // timeout terminated the reply
+      }
       log_error("expiry_listener: redisGetReply failed");
       break;
     }
@@ -109,6 +116,7 @@ static void* expiry_listener_thread(void* arg) {
 }
 
 bool server_repository_start_expiry_listener(void) {
+  log_info("starting server expiry listener...");
   expiry_running = true;
 
   if (pthread_create(&expiry_thread, NULL, expiry_listener_thread, NULL) != 0) {
@@ -117,12 +125,15 @@ bool server_repository_start_expiry_listener(void) {
     return false;
   }
 
+  log_info("server expiry listener started");
   return true;
 }
 
 void server_repository_stop_expiry_listener(void) {
+  log_info("stopping server expiry listener...");
   expiry_running = false;
   pthread_join(expiry_thread, NULL);
+  log_info("server expiry listener stopped");
 }
 
 bool server_repository_register(const Server* server) {
