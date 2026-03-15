@@ -170,14 +170,23 @@ bool server_init(void) {
 }
 
 void server_run(void) {
+  int epoll_fd = epoll_create1(0);
+  struct epoll_event ev = {
+    .events = EPOLLIN,
+    .data.fd = listen_fd
+  };
+  epoll_ctl(epoll_fd, EPOLL_CTL_ADD, listen_fd, &ev);
+
+  struct epoll_event events[1];
+
   while (running) {
+    int n = epoll_wait(epoll_fd, events, 1, 500);
+    if (n <= 0) {
+      continue;
+    }
+
     int conn_fd = accept(listen_fd, NULL, NULL);
     if (conn_fd == -1) {
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        continue;
-      }
-
-      log_error("accept failed: %s", strerror(errno));
       continue;
     }
 
@@ -186,12 +195,14 @@ void server_run(void) {
     Worker* worker = least_busy_worker();
     worker->conn_count++;
 
-    struct epoll_event ev = {
+    struct epoll_event cev = {
       .events = EPOLLIN | EPOLLET,
       .data.fd = conn_fd
     };
-    epoll_ctl(worker->epoll_fd, EPOLL_CTL_ADD, conn_fd, &ev);
+    epoll_ctl(worker->epoll_fd, EPOLL_CTL_ADD, conn_fd, &cev);
   }
+
+  close(epoll_fd);
 }
 
 void server_stop(void) {
@@ -199,6 +210,7 @@ void server_stop(void) {
 }
 
 void server_shutdown(void) {
+  log_info("server shutting down...");
   running = false;
   for (int i = 0; i < num_workers; i++) {
     pthread_join(threads[i], NULL);
