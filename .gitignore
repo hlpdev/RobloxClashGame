@@ -1,0 +1,4 @@
+server
+.env
+compile_commands.json
+.cache/
