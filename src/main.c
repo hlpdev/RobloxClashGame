@@ -1,3 +1,5 @@
+#include <signal.h>
+
 #include "repository/server_repository.h"
 #include "db/postgres.h"
 #include "db/migrations.h"
@@ -7,7 +9,16 @@
 #include "env/env.h"
 #include "log/log.h"
 
+static void handle_signal(int sig) {
+  (void)sig;
+  server_stop();
+}
+
 int main(void) {
+  // Register signals to handle proper shutdown
+  signal(SIGTERM, handle_signal);
+  signal(SIGINT, handle_signal);
+
   // Load environment vars
   Environment env;
   if (!env_load(&env)) {
