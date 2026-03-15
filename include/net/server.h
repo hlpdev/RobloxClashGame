@@ -4,4 +4,5 @@
 
 bool server_init(void);
 void server_run(void);
+void server_stop(void);
 void server_shutdown(void);

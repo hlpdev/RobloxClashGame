@@ -194,6 +194,10 @@ void server_run(void) {
   }
 }
 
+void server_stop(void) {
+  running = false;
+}
+
 void server_shutdown(void) {
   running = false;
   for (int i = 0; i < num_workers; i++) {
