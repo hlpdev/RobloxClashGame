@@ -2,6 +2,7 @@ services:
  
   server:
     build: .
+    stop_grace_period: 30s
     ports:
       - "8080:8080"
     depends_on:
