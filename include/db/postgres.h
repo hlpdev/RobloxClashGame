@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <libpq-fe.h>
 
-#define PG_POOL_SIZE 10
+#define PG_POOL_SIZE 25
 
 typedef struct {
   PGconn* connections[PG_POOL_SIZE];

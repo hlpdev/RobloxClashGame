@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <hiredis/hiredis.h>
 
-#define REDIS_POOL_SIZE 10
+#define REDIS_POOL_SIZE 25
 
 redisContext* redis_acquire(void);
 void redis_release(redisContext* ctx);
